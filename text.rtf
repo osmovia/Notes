@@ -10,3 +10,25 @@
         }
     }
 }
+
+// CustomArrayAdapter
+class MyArrayAdapter(context: Context, private val items: List<ObjectArrayAdapter>) :
+    ArrayAdapter<ObjectArrayAdapter>(context, R.layout.dropdown_item, items) {
+
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+        with(items[position]) {
+            val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.dropdown_item, parent, false)
+
+            val textView = view.findViewById<TextView>(R.id.text)
+            textView.setUp(this)
+
+            return view
+        }
+    }
+
+    private fun TextView.setUp(myName: ObjectArrayAdapter) {
+        this.textSize = if (myName.selected) 18F else 14F
+        this.setTextColorRes(if (myName.selected) R.color.black_color else R.color.dark_grey_color)
+        this.text = myName.text
+    }
+}

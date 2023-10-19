@@ -12,7 +12,7 @@
 }
 
 // CustomArrayAdapter
-class MyArrayAdapter(context: Context, private val items: List<ObjectArrayAdapter>) :
+3. class MyArrayAdapter(context: Context, private val items: List<ObjectArrayAdapter>) :
     ArrayAdapter<ObjectArrayAdapter>(context, R.layout.dropdown_item, items) {
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
@@ -32,3 +32,6 @@ class MyArrayAdapter(context: Context, private val items: List<ObjectArrayAdapte
         this.text = myName.text
     }
 }
+
+// 4. Get listing all extras of an Intent
+val extrasString = intent?.extras?.keySet()?.map { "$it: ${intent.extras?.get(it)}" }?.joinToString { it }

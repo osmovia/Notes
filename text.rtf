@@ -35,3 +35,65 @@
 
 // 4. Get listing all extras of an Intent
 val extrasString = intent?.extras?.keySet()?.map { "$it: ${intent.extras?.get(it)}" }?.joinToString { it }
+
+
+            onSuccess = { jsonObject ->
+                // Parse the JSON response using Gson
+                val response = runCatching { Gson().fromJson(jsonObject, HashMap::class.java) }.getOrNull()
+                // Extract necessary components from the response
+                val result = (response?.get("Result") as? LinkedTreeMap<*, *>)
+                val content = (result?.get("Content") as? LinkedTreeMap<*, *>)
+
+                // Initialize a HashMap to store the parsed content
+                val hashMapRaw = HashMap<String, LinkedTreeMap<String, LinkedTreeMap<String, Boolean>>>()
+                // Iterate over content and filter relevant keys
+                content?.forEach {
+                    when(it.key) {
+                        "Emotional", "Environmental", "Intellectual", "Occupational", "Physical", "Social", "Spiritual", "Virtual" -> {
+                            runCatching {
+                                // Add the filtered content to the listParentTitle
+                                hashMapRaw[it.key.toString()] = it.value as LinkedTreeMap<String, LinkedTreeMap<String, Boolean>>
+                            }
+                        }
+                    }
+                }
+
+                // Build tree nodes using the newly created function
+                val nodes = buildTreeNodes(hashMapRaw)
+
+                // Initialize and set up the TreeViewAdapter
+                adapterTree = TreeViewAdapter(
+                    nodes,
+                    listOf(ParentTreeBinder(this), ChildTreeBinder(this), CheckBoxTreeBinder(this))
+                )
+                // Set the adapter for the RecyclerView
+                binding.recyclerTree.adapter = adapterTree
+                activity?.hideProgress()
+            }
+
+    private fun buildTreeNodes(hashMapRaw: HashMap<String, LinkedTreeMap<String, LinkedTreeMap<String, Boolean>>>): List<TreeNode<*>> {
+        // Initialize a list to store tree nodes
+        val nodes: MutableList<TreeNode<*>> = ArrayList()
+
+        // Iterate over the listParentTitle and build the tree structure
+        hashMapRaw.forEach { parentObject ->
+            // Create a parent tree node
+            val parentTreeNode = TreeNode(ParentTreeItemType(TreeObject(convertCamelCaseToSentence(parentObject.key), parentObject.key)))
+            nodes.add(parentTreeNode)
+            // Iterate over child objects and build child tree nodes
+            parentObject.value.forEach {
+                val interestsContentTreeNode = TreeNode(ChildTreeItemType(TreeObject(convertCamelCaseToSentence(it.key), it.key)))
+                // Add child nodes for each child object
+                parentTreeNode.addChild(interestsContentTreeNode)
+                val list = it.value.map { TreeObject(convertCamelCaseToSentence(it.key), it.key, it.value) }
+                interestsContentTreeNode.addChild(TreeNode(CheckBoxTreeItemType(CheckBoxTreeObject(ArrayList(list)))))
+            }
+        }
+
+        return nodes
+    }
+
+  fun convertCamelCaseToSentence(inputString: String): String {
+      val words = inputString.split("(?=[A-Z])".toRegex())
+      return words.joinToString(" ") { it.capitalize() }
+  }
